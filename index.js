@@ -6,28 +6,37 @@ const server = http
         console.info('[' + now + '] Requested by ' + req.connection.remoteAddress);
         // req.connection.remoteAddress は、リクエストが送られた IP 情報を出力する。
         res.writeHead(200, {
-            'Content-Type': 'text/plain; charset=utf-8'
+            'Content-Type': 'text/html; charset=utf-8'
         });
 
         switch (req.method) {
             case 'GET':
-                res.write('GET ' + req.url);
+                const fs = require('fs');
+                const rs = fs.createReadStream('./form.html')
+                //イメージ的には./form.htmlをみてその内容をレスポンスで返している
+                rs.pipe(res)
+                //ファイルの情報をhtmlのレスポンスとして返している
                 break;
             case 'POST':
-                res.write('POST ' + req.url);
+
                 let rawData = '';
                 req
                     .on('data', chunk => {
                         rawData = rawData + chunk;
                     })
                     .on('end', () => {
-                        console.info('[' + now + '] Data posted: ' + rawData);
+                        const decoded = decodeURIComponent(rawData);
+                        console.info('[' + now + '] 投稿: ' + decoded);
+                        res.write('<!DOCTYPE html><html lang="ja"><body><h1>' +
+                            decoded + 'が投稿されました</h1></body></html>');
+                        res.end();
                     });
+
                 break;
             default:
                 break;
         }
-        res.end();
+
     })
     .on('error', e => {
         console.error('[' + new Date() + '] Server Error', e);
@@ -38,4 +47,5 @@ const server = http
 const port = 8000;
 server.listen(port, () => {
     console.info('[' + new Date() + '] Listening on ' + port);
-}); 
+});
+
